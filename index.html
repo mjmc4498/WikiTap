@@ -5,95 +5,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Traductor de Lengua de Señas</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <header class="main-header">
-        <h1>Traductor a Lengua de Señas</h1>
-        <p>Una herramienta para facilitar la comunicación</p>
+    <header class="header">
+        <div class="container">
+            <h1 class="header__title">Traductor a Lengua de Señas</h1>
+            <p class="header__subtitle">Una herramienta para facilitar la comunicación</p>
+        </div>
     </header>
 
-    <main>
-        <section class="translator-section">
-            <h2 class="section-title">Introduce tu texto</h2>
-            <form id="translator-form">
+    <main class="container">
+        <section class="card translator">
+            <h2 id="translator-heading" class="card__title">Introduce tu texto</h2>
+            <form id="translator-form" class="translator__form" aria-labelledby="translator-heading">
                 <label for="text-input" class="sr-only">Texto a traducir</label>
-                <textarea id="text-input" name="text-input" rows="4" placeholder="Escribe una palabra o frase, por ejemplo: hola buenos días"></textarea>
-                <div class="form-actions">
-                    <button type="submit" id="translate-btn">Traducir a Señas</button>
-                    <button type="button" id="speak-btn" title="Leer el texto en voz alta">Leer en Voz Alta 🔊</button>
+                <textarea id="text-input" class="translator__textarea" name="text-input" rows="4" placeholder="Escribe una palabra o frase, por ejemplo: hola buenos días"></textarea>
+                <div class="translator__actions">
+                    <button type="submit" id="translate-btn" class="button button--primary">Traducir a Señas</button>
+                    <button type="button" id="speak-btn" class="button button--secondary" title="Leer el texto en voz alta">Leer en Voz Alta 🔊</button>
                 </div>
             </form>
         </section>
 
-        <section class="output-section">
-            <h2 class="section-title">Traducción en Señas</h2>
+        <section class="card output">
+            <header class="card__header">
+                <h2 id="output-heading" class="card__title">Traducción en Señas</h2>
+                <div class="view-switcher">
+                    <label class="view-switcher__label"><input type="radio" name="view-mode" value="grid" checked> Vista General</label>
+                    <label class="view-switcher__label"><input type="radio" name="view-mode" value="step"> Paso a Paso</label>
+                </div>
+            </header>
 
-            <div class="view-switcher">
-                <label><input type="radio" name="view-mode" value="grid" checked> Vista General</label>
-                <label><input type="radio" name="view-mode" value="step"> Paso a Paso</label>
-            </div>
-
-            <!-- Contenedor para la vista general (grid) -->
-            <div id="signs-container" class="view-mode-container active-view" aria-live="polite">
+            <div id="signs-container" class="output__grid-view" role="region" aria-live="polite" aria-labelledby="output-heading">
                 <!-- Las imágenes de las señas aparecerán aquí -->
             </div>
 
-            <!-- Contenedor para la vista paso a paso -->
-            <div id="step-player-container" class="view-mode-container">
-                <div id="step-sign-display">
+            <div id="step-player-container" class="output__step-view" role="region" aria-live="polite" aria-labelledby="output-heading">
+                <div id="step-sign-display" class="output__step-display">
                     <!-- La seña actual aparecerá aquí -->
                 </div>
-                <div class="step-controls">
-                    <button id="prev-btn" disabled>&laquo; Anterior</button>
-                    <span id="step-counter"></span>
-                    <button id="next-btn" disabled>Siguiente &raquo;</button>
+                <div class="output__step-controls">
+                    <button id="prev-btn" class="button button--icon" disabled>&laquo; Anterior</button>
+                    <span id="step-counter" class="output__step-counter"></span>
+                    <button id="next-btn" class="button button--icon" disabled>Siguiente &raquo;</button>
                 </div>
             </div>
         </section>
     </main>
 
-    <footer class="main-footer">
-        <p>&copy; 2024 - Herramienta de Comunicación Accesible</p>
-        <button id="manage-signs-btn" class="footer-btn">Administrar Señas</button>
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 - Herramienta de Comunicación Accesible</p>
+            <button id="manage-signs-btn" class="button button--tertiary">Administrar Señas</button>
+        </div>
     </footer>
 
     <!-- Modal para la edición de señas -->
-    <div id="edit-modal" class="modal-hidden">
-        <div class="modal-content">
-            <button id="close-modal-btn" class="close-btn" title="Cerrar">&times;</button>
-            <h2>Seleccionar una Seña</h2>
-            <div id="modal-signs-grid">
+    <div id="edit-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title" aria-hidden="true">
+        <div class="modal__backdrop"></div>
+        <div class="modal__dialog">
+            <header class="modal__header">
+                <h2 id="edit-modal-title" class="modal__title">Seleccionar una Seña</h2>
+                <button id="close-edit-modal-btn" class="modal__close" title="Cerrar">&times;</button>
+            </header>
+            <div id="modal-signs-grid" class="modal__body">
                 <!-- La lista de señas de la biblioteca irá aquí dinámicamente -->
             </div>
         </div>
     </div>
 
     <!-- Modal para administrar el diccionario -->
-    <div id="manage-modal" class="modal-hidden">
-        <div class="modal-content">
-            <button id="close-manage-modal-btn" class="close-btn" title="Cerrar">&times;</button>
-            <h2>Administrar Diccionario de Señas</h2>
-            <p class="modal-description">Aquí puedes añadir, editar o eliminar las señas. Los cambios se guardarán en tu navegador.</p>
-
-            <div id="dict-list-container">
-                <!-- Las entradas del diccionario se generarán aquí con JS -->
+    <div id="manage-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="manage-modal-title" aria-hidden="true">
+        <div class="modal__backdrop"></div>
+        <div class="modal__dialog">
+            <header class="modal__header">
+                <h2 id="manage-modal-title" class="modal__title">Administrar Diccionario de Señas</h2>
+                <button id="close-manage-modal-btn" class="modal__close" title="Cerrar">&times;</button>
+            </header>
+            <div class="modal__body">
+                <p class="modal__description">Aquí puedes añadir, editar o eliminar las señas. Los cambios se guardarán en tu navegador.</p>
+                <div id="dict-list-container">
+                    <!-- Las entradas del diccionario se generarán aquí con JS -->
+                </div>
+                <h3 class="modal__subtitle">Añadir Nueva Seña</h3>
+                <form id="add-sign-form" class="dict-form">
+                    <input type="text" id="new-word-input" class="dict-form__input" placeholder="Nueva palabra (ej: casa)" required>
+                    <input type="url" id="new-url-input" class="dict-form__input" placeholder="URL de la imagen/GIF" required>
+                    <button type="submit" class="button button--primary">Añadir Seña</button>
+                </form>
             </div>
-
-            <h3 class="section-subtitle">Añadir Nueva Seña</h3>
-            <form id="add-sign-form" class="dict-form">
-                <input type="text" id="new-word-input" placeholder="Nueva palabra (ej: casa)" required>
-                <input type="url" id="new-url-input" placeholder="URL de la imagen/GIF" required>
-                <button type="submit">Añadir Seña</button>
-            </form>
-
-            <div class="modal-actions">
-                <button id="save-dict-btn" class="save-btn">Guardar Cambios</button>
-                <button id="reset-dict-btn" type="button" class="reset-btn">Restaurar Diccionario por Defecto</button>
-            </div>
+            <footer class="modal__footer">
+                <button id="save-dict-btn" class="button button--primary">Guardar Cambios</button>
+                <button id="reset-dict-btn" type="button" class="button button--danger">Restaurar por Defecto</button>
+            </footer>
         </div>
     </div>
-
 
     <script src="script.js"></script>
 </body>

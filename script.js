@@ -1,7 +1,5 @@
-// Lógica para el Traductor de Lengua de Señas
-
 document.addEventListener('DOMContentLoaded', () => {
-    // --- DICCIONARIO Y ESTADO ---
+    // --- 1. DICCIONARIO Y ESTADO DE LA APLICACIÓN ---
     const defaultSignLibrary = {
         'hola': 'assets/signs/hola.gif',
         'adiós': 'assets/signs/adios.gif',
@@ -22,187 +20,119 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSignIndex = 0;
     let wordIndexToEdit = -1;
 
-    // --- REFERENCIAS AL DOM ---
-    // Paneles, modales y botones principales
-    const translatorForm = document.getElementById('translator-form');
+    // --- 2. REFERENCIAS AL DOM ---
     const textInput = document.getElementById('text-input');
     const speakBtn = document.getElementById('speak-btn');
-    const manageSignsBtn = document.getElementById('manage-signs-btn');
 
-    // Traducción y vistas
+    // Vistas
     const viewModeRadios = document.querySelectorAll('input[name="view-mode"]');
     const signsContainer = document.getElementById('signs-container');
-
-    // Reproductor paso a paso
     const stepPlayerContainer = document.getElementById('step-player-container');
     const stepSignDisplay = document.getElementById('step-sign-display');
     const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
     const stepCounter = document.getElementById('step-counter');
 
-    // Modal de edición
+    // Modales
     const editModal = document.getElementById('edit-modal');
-    const closeModalBtn = document.getElementById('close-modal-btn');
-    const modalSignsGrid = document.getElementById('modal-signs-grid');
-
-    // Modal de administración
     const manageModal = document.getElementById('manage-modal');
-    const closeManageModalBtn = document.getElementById('close-manage-modal-btn');
+    const modalSignsGrid = document.getElementById('modal-signs-grid');
     const dictListContainer = document.getElementById('dict-list-container');
+
+    // Formularios
+    const translatorForm = document.getElementById('translator-form');
     const addSignForm = document.getElementById('add-sign-form');
     const newWordInput = document.getElementById('new-word-input');
     const newUrlInput = document.getElementById('new-url-input');
-    const saveDictBtn = document.getElementById('save-dict-btn');
-    const resetDictBtn = document.getElementById('reset-dict-btn');
 
-    // --- INICIALIZACIÓN ---
+    // --- 3. INICIALIZACIÓN ---
     initializeDictionary();
 
-    // --- EVENT LISTENERS ---
-    // Principales
+    // --- 4. EVENT LISTENERS ---
     translatorForm.addEventListener('submit', (e) => { e.preventDefault(); translateTextToSigns(); });
     speakBtn.addEventListener('click', speakText);
-    manageSignsBtn.addEventListener('click', openManagePanel);
+    document.getElementById('manage-signs-btn').addEventListener('click', openManagePanel);
 
-    // Vistas y navegación
     viewModeRadios.forEach(radio => radio.addEventListener('change', renderTranslation));
     nextBtn.addEventListener('click', () => { if (currentSignIndex < currentSignSequence.length - 1) { currentSignIndex++; renderStepView(); } });
     prevBtn.addEventListener('click', () => { if (currentSignIndex > 0) { currentSignIndex--; renderStepView(); } });
 
-    // Modales
-    closeModalBtn.addEventListener('click', closeSignSelector);
-    editModal.addEventListener('click', (e) => { if (e.target === editModal) closeSignSelector(); });
-    closeManageModalBtn.addEventListener('click', () => manageModal.classList.add('modal-hidden'));
+    // Listeners para Modales (usando delegación para algunos)
+    document.getElementById('close-edit-modal-btn').addEventListener('click', closeSignSelector);
+    editModal.addEventListener('click', (e) => { if (e.target.classList.contains('modal__backdrop')) closeSignSelector(); });
 
-    // Administración del diccionario
+    document.getElementById('close-manage-modal-btn').addEventListener('click', closeManagePanel);
+    manageModal.addEventListener('click', (e) => { if (e.target.classList.contains('modal__backdrop')) closeManagePanel(); });
+
     addSignForm.addEventListener('submit', handleAddNewSign);
     dictListContainer.addEventListener('click', handleDeleteSign);
-    saveDictBtn.addEventListener('click', saveDictionaryToLocalStorage);
-    resetDictBtn.addEventListener('click', resetDictionary);
+    document.getElementById('save-dict-btn').addEventListener('click', saveDictionaryToLocalStorage);
+    document.getElementById('reset-dict-btn').addEventListener('click', resetDictionary);
+    modalSignsGrid.addEventListener('click', handleSignSelection);
 
-    // --- LÓGICA DE DICCIONARIO ---
+    // --- 5. LÓGICA DE DICCIONARIO Y ALMACENAMIENTO ---
     function initializeDictionary() {
         const savedDict = localStorage.getItem('signLibrary');
         try {
             signLibrary = savedDict ? JSON.parse(savedDict) : { ...defaultSignLibrary };
         } catch (e) {
-            console.error("Error parsing saved dictionary:", e);
+            console.error("Error al parsear el diccionario guardado:", e);
             signLibrary = { ...defaultSignLibrary };
         }
     }
 
     function saveDictionaryToLocalStorage() {
-        // Primero, actualizamos el objeto `signLibrary` con los valores de los inputs
         const entries = dictListContainer.querySelectorAll('.dict-entry');
         const updatedLibrary = {};
         entries.forEach(entry => {
-            const word = entry.querySelector('.word').textContent;
-            const url = entry.querySelector('.url-input').value;
-            if (word && url) {
-                updatedLibrary[word] = url;
-            }
+            const word = entry.querySelector('.dict-entry__word').textContent;
+            const url = entry.querySelector('.dict-entry__url').value;
+            if (word && url) updatedLibrary[word] = url;
         });
         signLibrary = updatedLibrary;
-
         localStorage.setItem('signLibrary', JSON.stringify(signLibrary));
-        alert('¡Diccionario guardado en tu navegador!');
-        populateManagePanel(); // Repoblar para asegurar consistencia
+        alert('¡Diccionario guardado!');
+        populateManagePanel();
     }
 
     function resetDictionary() {
-        if (confirm('¿Estás seguro de que quieres borrar tu diccionario personalizado y restaurar el original?')) {
+        if (confirm('¿Restaurar el diccionario original? Perderás todos tus cambios.')) {
             localStorage.removeItem('signLibrary');
             initializeDictionary();
             populateManagePanel();
-            alert('Diccionario restaurado a la versión por defecto.');
+            alert('Diccionario restaurado.');
         }
     }
 
-    // --- LÓGICA DEL PANEL DE ADMINISTRACIÓN ---
-    function openManagePanel() {
-        populateManagePanel();
-        manageModal.classList.remove('modal-hidden');
-    }
-
-    function populateManagePanel() {
-        dictListContainer.innerHTML = '';
-        for (const word in signLibrary) {
-            const entry = document.createElement('div');
-            entry.className = 'dict-entry';
-            entry.innerHTML = `
-                <span class="word">${word}</span>
-                <input type="url" class="url-input" value="${signLibrary[word]}">
-                <button class="delete-btn" data-word="${word}" title="Eliminar">&times;</button>
-            `;
-            dictListContainer.appendChild(entry);
-        }
-    }
-
-    function handleAddNewSign(e) {
-        e.preventDefault();
-        const newWord = newWordInput.value.trim().toLowerCase();
-        const newUrl = newUrlInput.value.trim();
-        if (newWord && newUrl) {
-            if (signLibrary[newWord]) {
-                alert('Esa palabra ya existe en el diccionario.');
-                return;
-            }
-            signLibrary[newWord] = newUrl;
-            populateManagePanel(); // Refrescar la lista
-            newWordInput.value = '';
-            newUrlInput.value = '';
-        }
-    }
-
-    function handleDeleteSign(e) {
-        if (e.target.classList.contains('delete-btn')) {
-            const wordToDelete = e.target.dataset.word;
-            if (confirm(`¿Seguro que quieres eliminar la palabra "${wordToDelete}"?`)) {
-                delete signLibrary[wordToDelete];
-                populateManagePanel();
-            }
-        }
-    }
-
-    // --- LÓGICA DE TRADUCCIÓN Y VISTAS (MODIFICADA LIGERAMENTE) ---
-    // (El resto de funciones como translateTextToSigns, renderTranslation, etc. permanecen mayormente igual
-    // pero ahora usan la variable `signLibrary` que puede ser la por defecto o la personalizada)
-
+    // --- 6. LÓGICA DE TRADUCCIÓN Y VISTAS ---
     function translateTextToSigns() {
         const inputText = textInput.value.trim();
-        signsContainer.innerHTML = '';
-        stepSignDisplay.innerHTML = '';
-        stepCounter.textContent = '';
         currentSignSequence = [];
-
-        if (inputText === '') {
-            signsContainer.innerHTML = '<p>Por favor, escribe algo para traducir.</p>';
-            document.querySelector('input[name="view-mode"][value="grid"]').checked = true;
-            renderTranslation();
-            return;
+        if (inputText) {
+            const normalizedText = inputText.toLowerCase().replace(/[.,!?;¿¡]/g, '');
+            currentSignSequence = normalizedText.split(/\s+/).filter(word => word.length > 0);
         }
-
-        const normalizedText = inputText.toLowerCase().replace(/[.,!?;¿¡]/g, '');
-        currentSignSequence = normalizedText.split(/\s+/).filter(word => word.length > 0);
         currentSignIndex = 0;
         renderTranslation();
     }
 
     function renderTranslation() {
         const selectedView = document.querySelector('input[name="view-mode"]:checked').value;
-        document.querySelectorAll('.view-mode-container').forEach(c => c.classList.remove('active-view'));
-        if (selectedView === 'grid') {
-            signsContainer.classList.add('active-view');
-            renderGridView();
-        } else {
-            stepPlayerContainer.classList.add('active-view');
-            renderStepView();
-        }
+        const isGridView = selectedView === 'grid';
+
+        signsContainer.style.display = isGridView ? 'flex' : 'none';
+        stepPlayerContainer.style.display = isGridView ? 'none' : 'flex';
+
+        if (isGridView) renderGridView();
+        else renderStepView();
     }
 
     function renderGridView() {
         signsContainer.innerHTML = '';
-        if (currentSignSequence.length === 0) return;
+        if (currentSignSequence.length === 0) {
+            signsContainer.innerHTML = '<p>Escribe algo en el cuadro de arriba para empezar.</p>';
+            return;
+        }
         currentSignSequence.forEach((word, index) => {
             signsContainer.appendChild(createSignElement(word, index));
         });
@@ -212,12 +142,15 @@ document.addEventListener('DOMContentLoaded', () => {
         stepSignDisplay.innerHTML = '';
         prevBtn.disabled = true;
         nextBtn.disabled = true;
+
         if (currentSignSequence.length === 0) {
             stepCounter.textContent = '0 / 0';
             return;
         }
+
         const word = currentSignSequence[currentSignIndex];
         stepSignDisplay.appendChild(createSignElement(word, currentSignIndex));
+
         stepCounter.textContent = `${currentSignIndex + 1} / ${currentSignSequence.length}`;
         prevBtn.disabled = currentSignIndex === 0;
         nextBtn.disabled = currentSignIndex >= currentSignSequence.length - 1;
@@ -225,29 +158,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createSignElement(word, index) {
         const signWrapper = document.createElement('div');
-        signWrapper.classList.add('sign-wrapper');
+        signWrapper.className = 'sign';
         const signPath = signLibrary[word];
+
         let element;
         if (signPath) {
             element = document.createElement('img');
             element.src = signPath;
             element.alt = word;
-            element.classList.add('sign-image');
+            element.className = 'sign__image';
             element.onerror = () => element.replaceWith(createFallbackText(word));
         } else {
             element = createFallbackText(word);
         }
+
         const wordLabel = document.createElement('p');
         wordLabel.textContent = word;
-        wordLabel.classList.add('sign-label');
+        wordLabel.className = 'sign__label';
+
         signWrapper.appendChild(element);
         signWrapper.appendChild(wordLabel);
-        if (index !== -1) {
+
+        if (index !== -1) { // No añadir botón de editar a los elementos del modal de selección
             const editBtn = document.createElement('button');
             editBtn.innerHTML = '✏️';
-            editBtn.className = 'edit-sign-btn';
+            editBtn.className = 'sign__edit-btn';
             editBtn.title = 'Cambiar seña';
-            editBtn.addEventListener('click', () => openSignSelector(index));
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openSignSelector(index);
+            });
             signWrapper.appendChild(editBtn);
         }
         return signWrapper;
@@ -256,52 +196,108 @@ document.addEventListener('DOMContentLoaded', () => {
     function createFallbackText(word) {
         const fallback = document.createElement('span');
         fallback.textContent = word;
-        fallback.classList.add('word-text');
+        fallback.className = 'sign__fallback-text';
         return fallback;
     }
 
-    // --- LÓGICA DEL MODAL DE EDICIÓN ---
+    // --- 7. LÓGICA DE MODALES ---
+    function openModal(modalElement) {
+        modalElement.setAttribute('aria-hidden', 'false');
+        const firstFocusable = modalElement.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (firstFocusable) firstFocusable.focus();
+    }
+
+    function closeModal(modalElement) {
+        modalElement.setAttribute('aria-hidden', 'true');
+    }
+
+    // Modal de Edición
     function openSignSelector(index) {
         wordIndexToEdit = index;
         modalSignsGrid.innerHTML = '';
         for (const word in signLibrary) {
-            const signElement = createSignElement(word, -1);
+            const signElement = createSignElement(word, -1); // -1 para no mostrar botón de editar
             signElement.dataset.newWord = word;
-            signElement.addEventListener('click', handleSignSelection);
             modalSignsGrid.appendChild(signElement);
         }
-        editModal.classList.remove('modal-hidden');
+        openModal(editModal);
     }
 
-    function closeSignSelector() {
-        editModal.classList.add('modal-hidden');
-    }
+    function closeSignSelector() { closeModal(editModal); }
 
     function handleSignSelection(event) {
-        const newWord = event.currentTarget.dataset.newWord;
-        if (newWord && wordIndexToEdit > -1) {
-            currentSignSequence[wordIndexToEdit] = newWord;
-            closeSignSelector();
-            renderTranslation();
+        const selectedSign = event.target.closest('.sign');
+        if (selectedSign) {
+            const newWord = selectedSign.dataset.newWord;
+            if (newWord && wordIndexToEdit > -1) {
+                currentSignSequence[wordIndexToEdit] = newWord;
+                closeSignSelector();
+                renderTranslation();
+            }
         }
     }
 
-    // --- FUNCIÓN DE TEXTO A VOZ ---
-    function speakText() {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const textToSpeak = textInput.value.trim();
-            if (textToSpeak === '') {
-                const utterance = new SpeechSynthesisUtterance("Por favor, escribe algo para leer.");
-                utterance.lang = 'es-ES';
-                window.speechSynthesis.speak(utterance);
+    // Modal de Administración
+    function openManagePanel() {
+        populateManagePanel();
+        openModal(manageModal);
+    }
+
+    function closeManagePanel() { closeModal(manageModal); }
+
+    function populateManagePanel() {
+        dictListContainer.innerHTML = '';
+        Object.entries(signLibrary).forEach(([word, url]) => {
+            const entry = document.createElement('div');
+            entry.className = 'dict-entry';
+            entry.innerHTML = `
+                <span class="dict-entry__word">${word}</span>
+                <input type="url" class="dict-entry__url" value="${url}">
+                <button class="dict-entry__delete-btn" data-word="${word}" title="Eliminar">&times;</button>
+            `;
+            dictListContainer.appendChild(entry);
+        });
+    }
+
+    function handleAddNewSign(e) {
+        e.preventDefault();
+        const newWord = newWordInput.value.trim().toLowerCase();
+        const newUrl = newUrlInput.value.trim();
+        if (newWord && newUrl) {
+            if (signLibrary[newWord]) {
+                alert('Esa palabra ya existe. Edita la entrada existente.');
                 return;
             }
-            const utterance = new SpeechSynthesisUtterance(textToSpeak);
-            utterance.lang = 'es-ES';
-            window.speechSynthesis.speak(utterance);
-        } else {
-            alert('Lo siento, tu navegador no es compatible con la función de Texto a Voz.');
+            // No se guarda directamente, solo se añade a la UI. El usuario debe guardar.
+            const entry = document.createElement('div');
+            entry.className = 'dict-entry';
+            entry.innerHTML = `
+                <span class="dict-entry__word">${newWord}</span>
+                <input type="url" class="dict-entry__url" value="${newUrl}">
+                <button class="dict-entry__delete-btn" data-word="${newWord}" title="Eliminar">&times;</button>
+            `;
+            dictListContainer.appendChild(entry);
+            addSignForm.reset();
         }
+    }
+
+    function handleDeleteSign(e) {
+        if (e.target.classList.contains('dict-entry__delete-btn')) {
+            // No se borra del objeto, solo de la UI. El usuario debe guardar.
+            e.target.closest('.dict-entry').remove();
+        }
+    }
+
+    // --- 8. OTRAS UTILIDADES ---
+    function speakText() {
+        if (!('speechSynthesis' in window)) {
+            alert('Lo siento, tu navegador no es compatible con la función de Texto a Voz.');
+            return;
+        }
+        window.speechSynthesis.cancel();
+        const textToSpeak = textInput.value.trim();
+        const utterance = new SpeechSynthesisUtterance(textToSpeak || "Por favor, escribe algo para leer.");
+        utterance.lang = 'es-ES';
+        window.speechSynthesis.speak(utterance);
     }
 });
