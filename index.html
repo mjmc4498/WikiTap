@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traductor de Lengua de Señas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <h1>Traductor a Lengua de Señas</h1>
+        <p>Una herramienta para facilitar la comunicación</p>
+    </header>
+
+    <main>
+        <section class="translator-section">
+            <h2 class="section-title">Introduce tu texto</h2>
+            <form id="translator-form">
+                <label for="text-input" class="sr-only">Texto a traducir</label>
+                <textarea id="text-input" name="text-input" rows="4" placeholder="Escribe una palabra o frase, por ejemplo: hola buenos días"></textarea>
+                <div class="form-actions">
+                    <button type="submit" id="translate-btn">Traducir a Señas</button>
+                    <button type="button" id="speak-btn" title="Leer el texto en voz alta">Leer en Voz Alta 🔊</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="output-section">
+            <h2 class="section-title">Traducción en Señas</h2>
+
+            <div class="view-switcher">
+                <label><input type="radio" name="view-mode" value="grid" checked> Vista General</label>
+                <label><input type="radio" name="view-mode" value="step"> Paso a Paso</label>
+            </div>
+
+            <!-- Contenedor para la vista general (grid) -->
+            <div id="signs-container" class="view-mode-container active-view" aria-live="polite">
+                <!-- Las imágenes de las señas aparecerán aquí -->
+            </div>
+
+            <!-- Contenedor para la vista paso a paso -->
+            <div id="step-player-container" class="view-mode-container">
+                <div id="step-sign-display">
+                    <!-- La seña actual aparecerá aquí -->
+                </div>
+                <div class="step-controls">
+                    <button id="prev-btn" disabled>&laquo; Anterior</button>
+                    <span id="step-counter"></span>
+                    <button id="next-btn" disabled>Siguiente &raquo;</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2024 - Herramienta de Comunicación Accesible</p>
+    </footer>
+
+    <!-- Modal para la edición de señas -->
+    <div id="edit-modal" class="modal-hidden">
+        <div class="modal-content">
+            <button id="close-modal-btn" class="close-btn" title="Cerrar">&times;</button>
+            <h2>Seleccionar una Seña</h2>
+            <div id="modal-signs-grid">
+                <!-- La lista de señas de la biblioteca irá aquí dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
