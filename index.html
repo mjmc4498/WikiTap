@@ -55,6 +55,7 @@
 
     <footer class="main-footer">
         <p>&copy; 2024 - Herramienta de Comunicación Accesible</p>
+        <button id="manage-signs-btn" class="footer-btn">Administrar Señas</button>
     </footer>
 
     <!-- Modal para la edición de señas -->
@@ -67,6 +68,32 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal para administrar el diccionario -->
+    <div id="manage-modal" class="modal-hidden">
+        <div class="modal-content">
+            <button id="close-manage-modal-btn" class="close-btn" title="Cerrar">&times;</button>
+            <h2>Administrar Diccionario de Señas</h2>
+            <p class="modal-description">Aquí puedes añadir, editar o eliminar las señas. Los cambios se guardarán en tu navegador.</p>
+
+            <div id="dict-list-container">
+                <!-- Las entradas del diccionario se generarán aquí con JS -->
+            </div>
+
+            <h3 class="section-subtitle">Añadir Nueva Seña</h3>
+            <form id="add-sign-form" class="dict-form">
+                <input type="text" id="new-word-input" placeholder="Nueva palabra (ej: casa)" required>
+                <input type="url" id="new-url-input" placeholder="URL de la imagen/GIF" required>
+                <button type="submit">Añadir Seña</button>
+            </form>
+
+            <div class="modal-actions">
+                <button id="save-dict-btn" class="save-btn">Guardar Cambios</button>
+                <button id="reset-dict-btn" type="button" class="reset-btn">Restaurar Diccionario por Defecto</button>
+            </div>
+        </div>
+    </div>
+
 
     <script src="script.js"></script>
 </body>
